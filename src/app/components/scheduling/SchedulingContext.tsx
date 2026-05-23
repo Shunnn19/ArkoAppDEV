@@ -118,7 +118,7 @@ export const PH_HOLIDAYS: Record<string, string> = {
 };
 
 // ─── API configuration ────────────────────────────────────────────────────────
-const API_BASE = 'http://localhost/museum-api/api';
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost/museum-api/api';
 
 async function api<T>(method: string, path: string, body?: unknown): Promise<T> {
   const headers: Record<string, string> = {};
