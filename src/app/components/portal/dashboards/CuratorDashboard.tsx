@@ -22,6 +22,7 @@ interface Booking {
 
 interface LogEntry {
   logId: string;
+  arrivalDate: string;
   entryType: string;
   attendanceStatus: string;
   departureTime: string | null;
@@ -37,6 +38,20 @@ interface Notification {
   dateNotified: string;
 }
 
+const apiFetch = (url: string) => {
+  const token = localStorage.getItem('auth_token');
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  return fetch(url, { headers })
+    .then(r => r.json())
+    .then(d => {
+      if (d && Array.isArray(d.value)) return d.value;
+      if (Array.isArray(d)) return d;
+      return [];
+    })
+    .catch(() => []);
+};
+
 export default function CuratorDashboard({ userName, onNavigate }: CuratorDashboardProps) {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -45,21 +60,15 @@ export default function CuratorDashboard({ userName, onNavigate }: CuratorDashbo
 
   const today = new Date().toISOString().split('T')[0];
 
-  const getAuthHeaders = () => {
-    const token = localStorage.getItem('auth_token');
-    return token ? { Authorization: `Bearer ${token}` } : {};
-  };
-
   useEffect(() => {
-    const headers = getAuthHeaders();
     Promise.all([
-      fetch(`${API_BASE}/visitor-bookings`, { headers }).then(r => r.json()).then(d => Array.isArray(d.value) ? d.value : []).catch(() => []),
-      fetch(`${API_BASE}/attendance-logs`, { headers }).then(r => r.json()).then(d => Array.isArray(d.value) ? d.value : []).catch(() => []),
-      fetch(`${API_BASE}/notifications`, { headers }).then(r => r.json()).then(d => Array.isArray(d.value) ? d.value : []).catch(() => []),
+      apiFetch(`${API_BASE}/visitor-bookings`),
+      apiFetch(`${API_BASE}/attendance-logs`),
+      apiFetch(`${API_BASE}/notifications`),
     ]).then(([b, l, n]) => {
-      setBookings(b);
-      setLogs(l);
-      setNotifications(n);
+      setBookings(b as Booking[]);
+      setLogs(l as LogEntry[]);
+      setNotifications(n as Notification[]);
     }).finally(() => setLoading(false));
   }, []);
 
@@ -67,13 +76,14 @@ export default function CuratorDashboard({ userName, onNavigate }: CuratorDashbo
   const pendingBookings = bookings.filter(b => b.bookingStatus === 'Pending');
   const onSiteLogs = logs.filter(l => !l.departureTime && l.attendanceStatus === 'Present');
   const onSiteCount = onSiteLogs.reduce((sum, l) => sum + l.visitorCount, 0);
-  const todayTotalVisitors = todayBookings.reduce((sum, b) => sum + b.numberOfVisitors, 0);
+  const totalVisitorsToday = todayBookings.reduce((sum, b) => sum + b.numberOfVisitors, 0);
+  const todayArrivals = logs.filter(l => l.arrivalDate === today).reduce((s, l) => s + l.visitorCount, 0);
 
   const stats = [
-    { label: "Today's Bookings", value: todayBookings.length.toString(), sub: `${todayTotalVisitors} visitors`, icon: CalendarCheck, color: '#8B5CF6' },
+    { label: 'Total Visitors Today', value: totalVisitorsToday.toString(), sub: `${todayBookings.length} booking groups`, icon: CalendarCheck, color: '#8B5CF6' },
+    { label: 'Arrivals Today', value: todayArrivals.toString(), sub: 'actual visitors checked in', icon: Users, color: '#3B82F6' },
+    { label: 'On-Site Now', value: onSiteCount.toString(), sub: `${onSiteLogs.length} active entries`, icon: Clock, color: '#10B981' },
     { label: 'Pending Approvals', value: pendingBookings.length.toString(), sub: 'awaiting confirmation', icon: AlertTriangle, color: '#F59E0B' },
-    { label: 'On-Site Now', value: onSiteCount.toString(), sub: `${onSiteLogs.length} entries`, icon: Users, color: '#10B981' },
-    { label: 'Total Notifications', value: notifications.length.toString(), sub: 'all time', icon: Bell, color: '#3B82F6' },
   ];
 
   const quickActions = [

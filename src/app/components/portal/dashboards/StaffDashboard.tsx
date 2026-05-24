@@ -23,11 +23,26 @@ interface Booking {
 interface LogEntry {
   logId: string;
   arrivalDate: string;
+  attendanceStatus: string;
   departureTime: string | null;
   visitorCount: number;
   visitorFirstName: string;
   visitorLastName: string;
 }
+
+const apiFetch = (url: string) => {
+  const token = localStorage.getItem('auth_token');
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  return fetch(url, { headers })
+    .then(r => r.json())
+    .then(d => {
+      if (d && Array.isArray(d.value)) return d.value;
+      if (Array.isArray(d)) return d;
+      return [];
+    })
+    .catch(() => []);
+};
 
 export default function StaffDashboard({ userName, onNavigate }: StaffDashboardProps) {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -37,23 +52,22 @@ export default function StaffDashboard({ userName, onNavigate }: StaffDashboardP
   const today = new Date().toISOString().split('T')[0];
 
   useEffect(() => {
-    const token = localStorage.getItem('auth_token');
-    const headers = token ? { Authorization: `Bearer ${token}` } : {};
     Promise.all([
-      fetch(`${API_BASE}/visitor-bookings`, { headers }).then(r => r.json()).then(d => Array.isArray(d.value) ? d.value : []).catch(() => []),
-      fetch(`${API_BASE}/attendance-logs`, { headers }).then(r => r.json()).then(d => Array.isArray(d.value) ? d.value : []).catch(() => []),
+      apiFetch(`${API_BASE}/visitor-bookings`),
+      apiFetch(`${API_BASE}/attendance-logs`),
     ]).then(([b, l]) => {
-      setBookings(b);
-      setLogs(l);
+      setBookings(b as Booking[]);
+      setLogs(l as LogEntry[]);
     }).finally(() => setLoading(false));
   }, []);
 
   const todayBookings = bookings.filter(b => b.visitDate === today && b.bookingStatus !== 'Cancelled');
+  const totalVisitorsToday = todayBookings.reduce((s, b) => s + b.numberOfVisitors, 0);
   const todayLogs = logs.filter(l => l.arrivalDate === today);
-  const onSiteLogs = logs.filter(l => !l.departureTime);
+  const todayArrivals = todayLogs.reduce((s, l) => s + l.visitorCount, 0);
+  const onSiteLogs = logs.filter(l => !l.departureTime && l.attendanceStatus === 'Present');
   const onSiteCount = onSiteLogs.reduce((s, l) => s + l.visitorCount, 0);
   const pendingCount = bookings.filter(b => b.bookingStatus === 'Pending').length;
-  const todayArrivals = todayLogs.reduce((s, l) => s + l.visitorCount, 0);
 
   if (loading) {
     return (
@@ -72,12 +86,12 @@ export default function StaffDashboard({ userName, onNavigate }: StaffDashboardP
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="p-6">
-          <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-4" style={{ backgroundColor: '#1e3a5f15' }}>
-            <CalendarCheck className="w-6 h-6" style={{ color: '#1e3a5f' }} />
+          <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-4" style={{ backgroundColor: '#8B5CF615' }}>
+            <CalendarCheck className="w-6 h-6" style={{ color: '#8B5CF6' }} />
           </div>
-          <h3 className="text-2xl mb-1" style={{ color: '#1e3a5f' }}>{todayBookings.length}</h3>
-          <p className="text-sm text-[#4A5565]">Today's Bookings</p>
-          <p className="text-xs text-[#4A5565]">{todayBookings.reduce((s, b) => s + b.numberOfVisitors, 0)} total visitors</p>
+          <h3 className="text-2xl mb-1" style={{ color: '#8B5CF6' }}>{totalVisitorsToday}</h3>
+          <p className="text-sm text-[#4A5565]">Total Visitors Today</p>
+          <p className="text-xs text-[#4A5565]">{todayBookings.length} booking groups</p>
         </Card>
         <Card className="p-6">
           <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-4" style={{ backgroundColor: '#3B82F615' }}>
@@ -85,7 +99,7 @@ export default function StaffDashboard({ userName, onNavigate }: StaffDashboardP
           </div>
           <h3 className="text-2xl mb-1" style={{ color: '#3B82F6' }}>{todayArrivals}</h3>
           <p className="text-sm text-[#4A5565]">Arrivals Today</p>
-          <p className="text-xs text-[#4A5565]">{todayLogs.length} log entries</p>
+          <p className="text-xs text-[#4A5565]">actual visitors checked in</p>
         </Card>
         <Card className="p-6">
           <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-4" style={{ backgroundColor: '#10B98115' }}>
