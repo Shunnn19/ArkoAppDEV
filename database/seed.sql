@@ -61,21 +61,22 @@ INSERT INTO ATTENDANCE_LOG (logId, museumSelection, arrivalDate, arrivalTime, en
 ('LOG-2026-00004', 'Penafrancia_Museum', '2026-06-01', '10:30:00', 'Walk-in',    'Present', 'SCH-2026-002', NULL, 'WLK-00002', 'USR-PFM00000002');
 
 -- USERS (auth credentials — passwords hashed with bcrypt, cost=10)
+-- Test passwords: curator@museum.com / Curator@123, staff@museum.com / Staff@123, others: Public@123
 INSERT INTO users (id, email, password_hash, name, first_name, last_name, role, department, status, joined_date) VALUES
 ('USR-CUR00000001', 'curator@museum.com',
- '$2y$10$wT5JbGyRicTNhktbNlRzwe4Ce3bBkCzqSwgT28o89.44Krtk7fJGm',
+ '$2y$10$DtWvG4jKo.2AwZhsmUsAXuiuiMkCqD.bOrQHQ1ZDsIPqOYuCLJqfy',
  'Elizabeth Anderson', 'Elizabeth', 'Anderson', 'curator', 'Curatorial Department', 'Active', '2026-01-15'),
 ('USR-STF00000001', 'staff@museum.com',
- '$2y$10$NXnLBniXeuRre1CmjPdjwuWmn0H097j.IXJcjdmJma4EvGLCC5Qzu',
+ '$2y$10$LP2xND46lHDv9KFPGG8vaOoZkUDll3xIGN.MZmYLwvoNuf3WAGRx2',
  'Jennifer Williams', 'Jennifer', 'Williams', 'staff', 'Museum Operations', 'Active', '2026-02-01'),
 ('USR-GEN00000001', 'sarah@example.com',
- '$2y$10$NioUn60RFA0ehZqjl.MlHOGcItaNku.OT6jy5pR5lYuHatBhXH3Hi',
+ '$2y$10$AVHwLgh5Hj6lZAjZQmr0TucmNhkgEPlsZU9tSQdFX05vMsB3J3Q4C',
  'Sarah Johnson', 'Sarah', 'Johnson', 'general', '', 'Active', '2026-03-10'),
 ('USR-GEN00000002', 'maria@example.com',
- '$2y$10$NioUn60RFA0ehZqjl.MlHOGcItaNku.OT6jy5pR5lYuHatBhXH3Hi',
+ '$2y$10$li23aSLSc9Ug5K0YNzfNf.e5PbnUtAe8olvmtYx9rlP2/2OEYxIeG',
  'Maria Rodriguez', 'Maria', 'Rodriguez', 'researcher', '', 'Active', '2026-03-15'),
 ('USR-GEN00000003', 'michael@example.com',
- '$2y$10$NioUn60RFA0ehZqjl.MlHOGcItaNku.OT6jy5pR5lYuHatBhXH3Hi',
+ '$2y$10$kzNgfIgwWfr4gJ1RcVgew.WnmC.9g7R7oyaSueN590kjk8Kkzv/Em',
  'Michael Chen', 'Michael', 'Chen', 'educator', '', 'Active', '2026-03-20');
 
 -- NOTIFICATION_RECORD
