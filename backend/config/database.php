@@ -48,8 +48,19 @@ function getPathSegments(): array {
 }
 
 function getAuthUser(): ?array {
-  $headers = getallheaders();
-  $authHeader = $headers['Authorization'] ?? '';
+  // getallheaders() not available in PHP-FPM/FastCGI, so check $_SERVER too
+  $authHeader = '';
+  if (function_exists('getallheaders')) {
+    $headers = getallheaders();
+    $authHeader = $headers['Authorization'] ?? '';
+  }
+  if (!$authHeader) {
+    $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+  }
+  if (!$authHeader) {
+    // Apache sometimes puts it in REDIRECT_HTTP_AUTHORIZATION
+    $authHeader = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '';
+  }
   if (!preg_match('/^Bearer\s+(.+)$/', $authHeader, $m)) {
     return null;
   }
